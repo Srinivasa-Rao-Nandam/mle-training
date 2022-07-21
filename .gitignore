@@ -1,0 +1,8 @@
+#Ignore CSV files
+*.csv
+
+#Ignore python cache files
+*.pyc
+
+#Ignore .tgz files
+*.tgz
