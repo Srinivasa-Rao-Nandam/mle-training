@@ -46,10 +46,6 @@ housing["income_cat"] = pd.cut(
     bins=[0.0, 1.5, 3.0, 4.5, 6.0, np.inf],
     labels=[1, 2, 3, 4, 5],
 )
-<<<<<<< HEAD
-=======
-
->>>>>>> cf24a46283344685bb931b5276c7acead35bf7f7
 
 split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 for train_index, test_index in split.split(housing, housing["income_cat"]):
@@ -95,10 +91,7 @@ housing = strat_train_set.drop(
 )  # drop labels for training set
 housing_labels = strat_train_set["median_house_value"].copy()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> cf24a46283344685bb931b5276c7acead35bf7f7
 imputer = SimpleImputer(strategy="median")
 
 housing_num = housing.drop("ocean_proximity", axis=1)
@@ -118,10 +111,7 @@ housing_tr["population_per_household"] = (
 housing_cat = housing[["ocean_proximity"]]
 housing_prepared = housing_tr.join(pd.get_dummies(housing_cat, drop_first=True))
 
-<<<<<<< HEAD
 
-=======
->>>>>>> cf24a46283344685bb931b5276c7acead35bf7f7
 lin_reg = LinearRegression()
 lin_reg.fit(housing_prepared, housing_labels)
 
@@ -131,17 +121,11 @@ lin_mse = mean_squared_error(housing_labels, housing_predictions)
 lin_rmse = np.sqrt(lin_mse)
 lin_rmse
 
-<<<<<<< HEAD
 
 lin_mae = mean_absolute_error(housing_labels, housing_predictions)
 lin_mae
 
 
-=======
-lin_mae = mean_absolute_error(housing_labels, housing_predictions)
-lin_mae
-
->>>>>>> cf24a46283344685bb931b5276c7acead35bf7f7
 tree_reg = DecisionTreeRegressor(random_state=42)
 tree_reg.fit(housing_prepared, housing_labels)
 
@@ -150,10 +134,7 @@ tree_mse = mean_squared_error(housing_labels, housing_predictions)
 tree_rmse = np.sqrt(tree_mse)
 tree_rmse
 
-<<<<<<< HEAD
 
-=======
->>>>>>> cf24a46283344685bb931b5276c7acead35bf7f7
 param_distribs = {
     "n_estimators": randint(low=1, high=200),
     "max_features": randint(low=1, high=8),
@@ -173,10 +154,7 @@ cvres = rnd_search.cv_results_
 for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
     print(np.sqrt(-mean_score), params)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> cf24a46283344685bb931b5276c7acead35bf7f7
 param_grid = [
     # try 12 (3×4) combinations of hyperparameters
     {"n_estimators": [3, 10, 30], "max_features": [2, 4, 6, 8]},

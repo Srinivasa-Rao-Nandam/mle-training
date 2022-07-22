@@ -14,5 +14,5 @@
     "python.sortImports.args": [
         "--profile=black"
     ],
-    "python.defaultInterpreterPath": "C:/Users/srinivasarao.n/Miniconda3"
+    "python.defaultInterpreterPath": "C:/Users/srinivasarao.n.Miniconda3"
 }
