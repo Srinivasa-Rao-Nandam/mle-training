@@ -6,8 +6,12 @@ import tarfile
 import numpy as np
 import pandas as pd
 from six.moves import urllib
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 levels = {
     "critical": logging.CRITICAL,
@@ -17,6 +21,29 @@ levels = {
     "info": logging.INFO,
     "debug": logging.DEBUG,
 }
+
+
+# column index
+rooms_ix, bedrooms_ix, population_ix, households_ix = 3, 4, 5, 6
+
+
+class CombinedAttributesAdder(BaseEstimator, TransformerMixin):
+    def __init__(self, add_bedrooms_per_room=True):  # no *args or **kargs
+        self.add_bedrooms_per_room = add_bedrooms_per_room
+
+    def fit(self, X, y=None):
+        return self  # nothing else to do
+
+    def transform(self, X):
+        rooms_per_household = X[:, rooms_ix] / X[:, households_ix]
+        population_per_household = X[:, population_ix] / X[:, households_ix]
+        if self.add_bedrooms_per_room:
+            bedrooms_per_room = X[:, bedrooms_ix] / X[:, rooms_ix]
+            return np.c_[
+                X, rooms_per_household, population_per_household, bedrooms_per_room
+            ]
+        else:
+            return np.c_[X, rooms_per_household, population_per_household]
 
 
 def parse_arguments():
@@ -177,40 +204,36 @@ def transform_data():
         set_.drop("income_cat", axis=1, inplace=True)
 
     housing = strat_train_set.copy()
-    housing.plot(kind="scatter", x="longitude", y="latitude")
-    housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
 
     corr_matrix = housing.corr()
     corr_matrix["median_house_value"].sort_values(ascending=False)
-    housing["rooms_per_household"] = housing["total_rooms"] / housing["households"]
-    housing["bedrooms_per_room"] = housing["total_bedrooms"] / housing["total_rooms"]
-    housing["population_per_household"] = housing["population"] / housing["households"]
 
     housing = strat_train_set.drop(
         "median_house_value", axis=1
     )  # drop labels for training set
     housing_labels = strat_train_set["median_house_value"].copy()
 
-    imputer = SimpleImputer(strategy="median")
-
     housing_num = housing.drop("ocean_proximity", axis=1)
 
-    imputer.fit(housing_num)
-    X = imputer.transform(housing_num)
-
-    housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing.index)
-    housing_tr["rooms_per_household"] = (
-        housing_tr["total_rooms"] / housing_tr["households"]
-    )
-    housing_tr["bedrooms_per_room"] = (
-        housing_tr["total_bedrooms"] / housing_tr["total_rooms"]
-    )
-    housing_tr["population_per_household"] = (
-        housing_tr["population"] / housing_tr["households"]
+    num_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("attribs_adder", CombinedAttributesAdder()),
+            ("std_scaler", StandardScaler()),
+        ]
     )
 
-    housing_cat = housing[["ocean_proximity"]]
-    housing_prepared = housing_tr.join(pd.get_dummies(housing_cat, drop_first=True))
+    num_attribs = list(housing_num)
+    cat_attribs = ["ocean_proximity"]
+
+    full_pipeline = ColumnTransformer(
+        [
+            ("num", num_pipeline, num_attribs),
+            ("cat", OneHotEncoder(), cat_attribs),
+        ]
+    )
+
+    housing_prepared = full_pipeline.fit_transform(housing)
 
     OUTPUT_HOUSING_TRAINING_DATA_PATH = os.path.join(
         OUTPUT_HOUSING_PATH, "train_data.csv"
@@ -219,36 +242,32 @@ def transform_data():
         OUTPUT_HOUSING_PATH, "train_label.csv"
     )
     logging.info("saving train dataset")
-    housing_prepared.to_csv(OUTPUT_HOUSING_TRAINING_DATA_PATH)
-    housing_labels.to_csv(OUTPUT_HOUSING_TRAINING_LABEL_PATH)
+    pd.DataFrame(housing_prepared).to_csv(OUTPUT_HOUSING_TRAINING_DATA_PATH)
+    pd.DataFrame(housing_labels).to_csv(OUTPUT_HOUSING_TRAINING_LABEL_PATH)
 
     X_test = strat_test_set.drop("median_house_value", axis=1)
     y_test = strat_test_set["median_house_value"].copy()
 
     X_test_num = X_test.drop("ocean_proximity", axis=1)
-    X_test_prepared = imputer.transform(X_test_num)
-    X_test_prepared = pd.DataFrame(
-        X_test_prepared, columns=X_test_num.columns, index=X_test.index
-    )
-    X_test_prepared["rooms_per_household"] = (
-        X_test_prepared["total_rooms"] / X_test_prepared["households"]
-    )
-    X_test_prepared["bedrooms_per_room"] = (
-        X_test_prepared["total_bedrooms"] / X_test_prepared["total_rooms"]
-    )
-    X_test_prepared["population_per_household"] = (
-        X_test_prepared["population"] / X_test_prepared["households"]
+
+    num_attribs = list(X_test_num)
+    cat_attribs = ["ocean_proximity"]
+
+    full_pipeline = ColumnTransformer(
+        [
+            ("num", num_pipeline, num_attribs),
+            ("cat", OneHotEncoder(), cat_attribs),
+        ]
     )
 
-    X_test_cat = X_test[["ocean_proximity"]]
-    X_test_prepared = X_test_prepared.join(pd.get_dummies(X_test_cat, drop_first=True))
+    X_test_prepared = full_pipeline.fit_transform(X_test)
 
     OUTPUT_HOUSING_TEST_DATA_PATH = os.path.join(OUTPUT_HOUSING_PATH, "test_data.csv")
     OUTPUT_HOUSING_TEST_LABEL_PATH = os.path.join(OUTPUT_HOUSING_PATH, "test_label.csv")
 
     logging.info("saving test dataset")
-    X_test_prepared.to_csv(OUTPUT_HOUSING_TEST_DATA_PATH)
-    y_test.to_csv(OUTPUT_HOUSING_TEST_LABEL_PATH)
+    pd.DataFrame(X_test_prepared).to_csv(OUTPUT_HOUSING_TEST_DATA_PATH)
+    pd.DataFrame(y_test).to_csv(OUTPUT_HOUSING_TEST_LABEL_PATH)
 
 
 if __name__ == "__main__":
