@@ -1,24 +1,12 @@
 import argparse
 import logging
-import os
 import pickle
-import tarfile
 
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
-from scipy.stats import randint
-from six.moves import urllib
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-from sklearn.model_selection import (
-    GridSearchCV,
-    RandomizedSearchCV,
-    StratifiedShuffleSplit,
-    train_test_split,
-)
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error
 
 levels = {
     "critical": logging.CRITICAL,
@@ -82,7 +70,13 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def score():
+def score(
+    test_data,
+    test_labels,
+    pickle_model,
+    logfile="logs\\score_log.txt",
+    loglevel="debug",
+):
     """Returns score on test dataset.
 
     Args:
@@ -93,17 +87,19 @@ def score():
 
     """
 
-    args = parse_arguments()
-
     logging.basicConfig(
-        filename=args.logfile, filemode="w", level=levels.get(args.loglevel.lower())
+        filename=logfile, filemode="w", level=levels.get(loglevel.lower())
     )
 
-    logging.info("Loading datasets")
-    X_test_prepared = pd.read_csv(args.test_data)
-    y_test = pd.read_csv(args.test_labels)
+    mlflow.log_param(key="test_data_path", value=test_data)
+    mlflow.log_param(key="test_data_path", value=test_labels)
+    mlflow.log_param(key="model_path", value=pickle_model)
 
-    with open(args.pickle_model, "rb") as f:
+    logging.info("Loading datasets")
+    X_test_prepared = pd.read_csv(test_data)
+    y_test = pd.read_csv(test_labels)
+
+    with open(pickle_model, "rb") as f:
         final_model = pickle.load(f)
 
     logging.info("Running predictions")
@@ -118,8 +114,14 @@ def score():
             final_rmse, final_mse
         )
     )
+
+    mlflow.log_metric(key="test_rmse", value=final_rmse)
+    mlflow.log_metric(key="test_mse", value=final_mse)
     return final_rmse, final_mse
 
 
 if __name__ == "__main__":
-    score()
+    args = parse_arguments()
+    score(
+        args.test_data, args.test_labels, args.pickle_model, args.logfile, args.loglevel
+    )
