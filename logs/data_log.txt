@@ -1,4 +1,52 @@
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
 INFO:root:downloading dataset
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
 INFO:root:splitting the dataset
 INFO:root:saving train dataset
 INFO:root:saving test dataset
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/update HTTP/1.1" 200 385
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/create HTTP/1.1" 200 1048
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+INFO:root:Loading datasets
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-metric HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-metric HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/update HTTP/1.1" 200 385
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/create HTTP/1.1" 200 1048
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-parameter HTTP/1.1" 200 2
+INFO:root:Loading datasets
+INFO:root:Running predictions
+INFO:root:Calculating metrics
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-metric HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/log-metric HTTP/1.1" 200 2
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/update HTTP/1.1" 200 385
+DEBUG:urllib3.connectionpool:Resetting dropped connection: 127.0.0.1
+DEBUG:urllib3.connectionpool:http://127.0.0.1:5000 "POST /api/2.0/mlflow/runs/update HTTP/1.1" 200 385

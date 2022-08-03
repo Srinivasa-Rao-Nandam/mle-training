@@ -3,6 +3,8 @@ import logging
 import os
 import tarfile
 
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 from six.moves import urllib
@@ -145,7 +147,13 @@ def income_cat_proportions(data):
     return data["income_cat"].value_counts() / len(data)
 
 
-def transform_data():
+def transform_data(
+    download_url,
+    raw_dataset_folder,
+    processed_dataset_folder,
+    logfile="logs\\data_log.txt",
+    loglevel="debug",
+):
     """Transform data and stores it
 
     Args:
@@ -155,20 +163,21 @@ def transform_data():
         returns None, stores files at particular location
 
     """
-
-    args = parse_arguments()
     logging.basicConfig(
-        filename=args.logfile, filemode="w", level=levels.get(args.loglevel.lower())
+        filename=logfile, filemode="w", level=levels.get(loglevel.lower())
     )
+    mlflow.log_param(key="download_url", value=download_url)
 
-    HOUSING_PATH = os.path.join(args.raw_dataset_folder, "housing")
-    HOUSING_URL = args.download_url
-    OUTPUT_HOUSING_PATH = os.path.join(args.processed_dataset_folder, "housing")
+    HOUSING_PATH = os.path.join(raw_dataset_folder, "housing")
+    HOUSING_URL = download_url
+    OUTPUT_HOUSING_PATH = os.path.join(processed_dataset_folder, "housing")
     os.makedirs(OUTPUT_HOUSING_PATH, exist_ok=True)
 
     logging.info("downloading dataset")
     fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH)
     housing = load_housing_data(HOUSING_PATH)
+
+    mlflow.log_param(key="raw_dataset_folder", value=raw_dataset_folder)
 
     train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 
@@ -268,7 +277,22 @@ def transform_data():
     logging.info("saving test dataset")
     pd.DataFrame(X_test_prepared).to_csv(OUTPUT_HOUSING_TEST_DATA_PATH)
     pd.DataFrame(y_test).to_csv(OUTPUT_HOUSING_TEST_LABEL_PATH)
+    mlflow.log_param(key="processed_dataset_folder", value=processed_dataset_folder)
+
+    return (
+        OUTPUT_HOUSING_TRAINING_DATA_PATH,
+        OUTPUT_HOUSING_TRAINING_LABEL_PATH,
+        OUTPUT_HOUSING_TEST_DATA_PATH,
+        OUTPUT_HOUSING_TEST_LABEL_PATH,
+    )
 
 
 if __name__ == "__main__":
-    transform_data()
+    args = parse_arguments()
+    transform_data(
+        args.download_url,
+        args.raw_dataset_folder,
+        args.processed_dataset_folder,
+        args.logfile,
+        args.loglevel,
+    )

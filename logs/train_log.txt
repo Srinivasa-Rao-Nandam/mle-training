@@ -1,5 +1,1 @@
 INFO:root:Loading datasets
-INFO:root:Running linear regression
-INFO:root:Running decision tree regression
-INFO:root:Running random forest tree regression
-INFO:root:Getting best model

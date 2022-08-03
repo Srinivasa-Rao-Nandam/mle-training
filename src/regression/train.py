@@ -3,12 +3,14 @@ import logging
 import os
 import pickle
 
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 from scipy.stats import randint
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.tree import DecisionTreeRegressor
 
@@ -20,6 +22,11 @@ levels = {
     "info": logging.INFO,
     "debug": logging.DEBUG,
 }
+
+MODEL_TYPE_LINEAR = "linear_regression"
+MODEL_TYPE_DECISION_TREE = "decision_tree"
+MODEL_TYPE_GRID_SEARCH_RANDOM_FOREST = "grid_search_random_forest"
+MODEL_TYPE_RANDOM_SEARCH_RANDOM_FOREST = "random_search_random_forest"
 
 
 def parse_arguments():
@@ -72,10 +79,29 @@ def parse_arguments():
             "debug",
         ],
     )
+    parser.add_argument(
+        "--model",
+        type=str,
+        help="type of model",
+        default=MODEL_TYPE_GRID_SEARCH_RANDOM_FOREST,
+        choices=[
+            MODEL_TYPE_LINEAR,
+            MODEL_TYPE_DECISION_TREE,
+            MODEL_TYPE_RANDOM_SEARCH_RANDOM_FOREST,
+            MODEL_TYPE_GRID_SEARCH_RANDOM_FOREST,
+        ],
+    )
     return parser.parse_args()
 
 
-def train():
+def train(
+    train_data,
+    train_labels,
+    pickle_output_folder,
+    model,
+    logfile="logs\\train_log.txt",
+    loglevel="debug",
+):
     """Runs model on the training dataset.
 
     Args:
@@ -86,91 +112,105 @@ def train():
 
     """
 
-    args = parse_arguments()
-
     logging.basicConfig(
-        filename=args.logfile, filemode="w", level=levels.get(args.loglevel.lower())
+        filename=logfile, filemode="w", level=levels.get(loglevel.lower())
     )
 
     logging.info("Loading datasets")
-    housing_prepared = pd.read_csv(args.train_data)
-    housing_labels = pd.read_csv(args.train_labels)
+    housing_prepared = pd.read_csv(train_data)
+    housing_labels = pd.read_csv(train_labels)
 
-    logging.info("Running linear regression")
-    lin_reg = LinearRegression()
-    lin_reg.fit(housing_prepared, housing_labels)
+    mlflow.log_param(key="train_data_path", value=train_data)
+    mlflow.log_param(key="train_labels_path", value=train_labels)
+    mlflow.log_param(key="model_type", value=model)
 
-    housing_predictions = lin_reg.predict(housing_prepared)
-    lin_mse = mean_squared_error(housing_labels, housing_predictions)
-    lin_rmse = np.sqrt(lin_mse)
-    lin_rmse
+    if model == MODEL_TYPE_LINEAR:
+        logging.info("Running linear regression")
+        lin_reg = LinearRegression()
+        lin_reg.fit(housing_prepared, housing_labels)
 
-    lin_mae = mean_absolute_error(housing_labels, housing_predictions)
-    lin_mae
+        final_model = lin_reg
 
-    logging.info("Running decision tree regression")
-    tree_reg = DecisionTreeRegressor(random_state=42)
-    tree_reg.fit(housing_prepared, housing_labels)
+    elif model == MODEL_TYPE_DECISION_TREE:
+        logging.info("Running decision tree regression")
+        tree_reg = DecisionTreeRegressor(random_state=42)
+        tree_reg.fit(housing_prepared, housing_labels)
 
-    housing_predictions = tree_reg.predict(housing_prepared)
-    tree_mse = mean_squared_error(housing_labels, housing_predictions)
-    tree_rmse = np.sqrt(tree_mse)
-    tree_rmse
+        final_model = tree_reg
 
-    param_distribs = {
-        "n_estimators": randint(low=1, high=200),
-        "max_features": randint(low=1, high=8),
-    }
+    elif model == MODEL_TYPE_RANDOM_SEARCH_RANDOM_FOREST:
+        param_distribs = {
+            "n_estimators": randint(low=1, high=200),
+            "max_features": randint(low=1, high=8),
+        }
 
-    logging.info("Running random forest tree regression")
-    forest_reg = RandomForestRegressor(random_state=42)
-    rnd_search = RandomizedSearchCV(
-        forest_reg,
-        param_distributions=param_distribs,
-        n_iter=10,
-        cv=5,
-        scoring="neg_mean_squared_error",
-        random_state=42,
-    )
-    rnd_search.fit(housing_prepared, housing_labels)
-    cvres = rnd_search.cv_results_
-    for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
-        print(np.sqrt(-mean_score), params)
+        logging.info("Running random forest tree regression")
+        forest_reg = RandomForestRegressor(random_state=42)
+        rnd_search = RandomizedSearchCV(
+            forest_reg,
+            param_distributions=param_distribs,
+            n_iter=10,
+            cv=5,
+            scoring="neg_mean_squared_error",
+            random_state=42,
+        )
+        rnd_search.fit(housing_prepared, housing_labels)
+        cvres = rnd_search.cv_results_
+        for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+            print(np.sqrt(-mean_score), params)
 
-    param_grid = [
-        # try 12 (3×4) combinations of hyperparameters
-        {"n_estimators": [3, 10, 30], "max_features": [2, 4, 6, 8]},
-        # then try 6 (2×3) combinations with bootstrap set as False
-        {"bootstrap": [False], "n_estimators": [3, 10], "max_features": [2, 3, 4]},
-    ]
+        final_model = rnd_search.best_estimator_
 
-    forest_reg = RandomForestRegressor(random_state=42)
-    # train across 5 folds, that's a total of (12+6)*5=90 rounds of training
-    grid_search = GridSearchCV(
-        forest_reg,
-        param_grid,
-        cv=5,
-        scoring="neg_mean_squared_error",
-        return_train_score=True,
-    )
-    grid_search.fit(housing_prepared, housing_labels)
+    elif model == MODEL_TYPE_GRID_SEARCH_RANDOM_FOREST:
+        param_grid = [
+            # try 12 (3×4) combinations of hyperparameters
+            {"n_estimators": [3, 10, 30], "max_features": [2, 4, 6, 8]},
+            # then try 6 (2×3) combinations with bootstrap set as False
+            {"bootstrap": [False], "n_estimators": [3, 10], "max_features": [2, 3, 4]},
+        ]
 
-    grid_search.best_params_
-    cvres = grid_search.cv_results_
-    for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
-        print(np.sqrt(-mean_score), params)
+        forest_reg = RandomForestRegressor(random_state=42)
+        # train across 5 folds, that's a total of (12+6)*5=90 rounds of training
+        grid_search = GridSearchCV(
+            forest_reg,
+            param_grid,
+            cv=5,
+            scoring="neg_mean_squared_error",
+            return_train_score=True,
+        )
+        grid_search.fit(housing_prepared, housing_labels)
 
-    feature_importances = grid_search.best_estimator_.feature_importances_
-    sorted(zip(feature_importances, housing_prepared.columns), reverse=True)
+        grid_search.best_params_
+        cvres = grid_search.cv_results_
+        for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+            print(np.sqrt(-mean_score), params)
 
-    logging.info("Getting best model")
-    final_model = grid_search.best_estimator_
+        final_model = grid_search.best_estimator_
 
-    with open(os.path.join(args.pickle_output_folder, "best_model.pickle"), "wb") as f:
+    housing_predictions = final_model.predict(housing_prepared)
+    mse = mean_squared_error(housing_labels, housing_predictions)
+    rmse = np.sqrt(mse)
+
+    with open(os.path.join(pickle_output_folder, "best_model.pickle"), "wb") as f:
         pickle.dump(final_model, f)
 
-    return final_model
+    mlflow.log_param(
+        key="model_output_path",
+        value=os.path.join(pickle_output_folder, "best_model.pickle"),
+    )
+    mlflow.log_metric(key="train_rmse", value=rmse)
+    mlflow.log_metric(key="train_mse", value=mse)
+
+    return os.path.join(pickle_output_folder, "best_model.pickle"), rmse, mse
 
 
 if __name__ == "__main__":
-    train()
+    args = parse_arguments()
+    train(
+        args.train_data,
+        args.train_labels,
+        args.pickle_output_folder,
+        args.logfile,
+        args.loglevel,
+        args.model,
+    )
