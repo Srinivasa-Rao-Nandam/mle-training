@@ -45,25 +45,25 @@ def parse_arguments():
         "--test_data",
         type=str,
         help="Training dataset",
-        default="data\\processed\\housing\\test_data.csv",
+        default="data/processed/housing/test_data.csv",
     )
     parser.add_argument(
         "--test_labels",
         type=str,
         help="Training labels",
-        default="data\\processed\\housing\\test_label.csv",
+        default="data/processed/housing/test_label.csv",
     )
     parser.add_argument(
         "--pickle_model",
         type=str,
         help="Output folder for pickle",
-        default="artifacts\\best_model.pickle",
+        default="artifacts/best_model.pickle",
     )
     parser.add_argument(
         "--logfile",
         type=str,
         help="Logging file output",
-        default="logs\\score_log.txt",
+        default="logs/score_log.txt",
     )
     parser.add_argument(
         "--loglevel",

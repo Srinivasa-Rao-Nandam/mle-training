@@ -38,13 +38,13 @@ def parse_arguments():
         "--train_data",
         type=str,
         help="Training dataset",
-        default="data\\processed\\housing\\train_data.csv",
+        default="data/processed/housing/train_data.csv",
     )
     parser.add_argument(
         "--train_labels",
         type=str,
         help="Training labels",
-        default="data\\processed\\housing\\train_label.csv",
+        default="data/processed/housing/train_label.csv",
     )
     parser.add_argument(
         "--pickle_output_folder",
@@ -56,7 +56,7 @@ def parse_arguments():
         "--logfile",
         type=str,
         help="Logging file output",
-        default="logs\\train_log.txt",
+        default="logs/train_log.txt",
     )
     parser.add_argument(
         "--loglevel",

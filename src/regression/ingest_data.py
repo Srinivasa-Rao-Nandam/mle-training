@@ -41,19 +41,19 @@ def parse_arguments():
         "--raw_dataset_folder",
         type=str,
         help="Folder to store raw dataset",
-        default="data\\raw",
+        default="data/raw",
     )
     argparser.add_argument(
         "--processed_dataset_folder",
         type=str,
         help="Folder to store processed dataset",
-        default="data\\processed",
+        default="data/processed",
     )
     argparser.add_argument(
         "--logfile",
         type=str,
         help="Logging file output",
-        default="logs\\data_log.txt",
+        default="logs/data_log.txt",
     )
     argparser.add_argument(
         "--loglevel",
